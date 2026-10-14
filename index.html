@@ -29,9 +29,12 @@
         }
 
         button,
-        input {
+        input,
+        select {
             font: inherit;
         }
+
+        [hidden] { display: none !important; }
 
         button {
             cursor: pointer;
@@ -45,36 +48,10 @@
 
         .top-line {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             gap: 16px;
             margin-bottom: 16px;
-        }
-
-        .repo-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--dark);
-            text-decoration: none;
-            font-weight: 700;
-            border: 1px solid var(--dark);
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 7px 11px;
-        }
-
-        .repo-link svg {
-            width: 18px;
-            height: 18px;
-            flex: 0 0 auto;
-            fill: currentColor;
-        }
-
-        .repo-link:hover {
-            color: #000;
-            background: #fff;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
         }
 
         .lang select {
@@ -148,8 +125,7 @@
         }
 
         .guide-btn,
-        .copy-btn,
-        .tab-btn {
+        .copy-btn {
             border: 0;
             border-radius: 6px;
             min-height: 42px;
@@ -332,6 +308,39 @@
             width: 100%;
         }
 
+        .source-card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fbfbfa;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .source-card h3 { margin: 0 0 14px; font-size: 17px; }
+        .source-controls { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+        .source-field { display: grid; gap: 7px; flex: 0 0 190px; }
+        .source-http { flex: 1; min-width: min(260px, 100%); }
+        .source-field label { font-size: 13px; font-weight: 700; }
+        .source-field select,
+        .source-field input {
+            width: 100%;
+            min-width: 0;
+            height: 42px;
+            padding: 0 12px;
+            border: 1px solid #cfcfca;
+            border-radius: 6px;
+            background: #fff;
+            color: var(--ink);
+        }
+        .source-field input[aria-invalid="true"] { border-color: #b73737; }
+        .source-card .command { grid-template-columns: minmax(0, 1fr) auto; }
+        .source-card .copy-btn { width: auto; }
+        .copy-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+        .source-hint { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+        .source-hint.is-error { color: #a52a2a; }
+        .command-card p { color: var(--muted); line-height: 1.65; }
+        .link-btn { border: 0; padding: 0; background: transparent; color: var(--ink); text-decoration: underline; font: inherit; }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -415,6 +424,10 @@
 
         .modal {
             width: min(760px, 100%);
+            max-height: calc(100vh - 104px);
+            max-height: calc(100dvh - 104px);
+            display: flex;
+            flex-direction: column;
             border-radius: 8px;
             background: #fff;
             box-shadow: 0 26px 90px rgba(0, 0, 0, 0.28);
@@ -423,6 +436,7 @@
 
         .modal-head {
             display: flex;
+            flex-shrink: 0;
             justify-content: space-between;
             gap: 20px;
             align-items: center;
@@ -446,37 +460,39 @@
             line-height: 1;
         }
 
-        .tabs {
-            display: flex;
-            gap: 8px;
-            padding: 16px 24px 0;
-            overflow-x: auto;
+        .guide-content {
+            padding: 20px 24px 24px;
+            overflow-y: auto;
+            min-height: 0;
         }
 
-        .tab-btn {
-            background: #efefec;
-            color: #343434;
-        }
+        .guide-tabs { display: flex; gap: 8px; padding: 14px 24px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+        .guide-tab { flex: 1; min-height: 40px; border: 1px solid var(--line); border-radius: 6px; background: #f5f5f3; color: var(--muted); font-weight: 700; }
+        .guide-tab[aria-selected="true"] { background: var(--dark); border-color: var(--dark); color: #fff; }
+        .guide-command { margin: 10px 0 12px; padding: 12px 14px; border-radius: 6px; background: var(--dark); color: #f2f2f2; font-size: 13px; line-height: 1.7; }
+        .guide-command code { white-space: pre-wrap; overflow-wrap: anywhere; }
+        .guide-status { padding: 12px 14px; background: #f5f5f3; border-left: 3px solid var(--dark); margin-bottom: 20px; color: #4f4f4f; line-height: 1.7; }
 
-        .tab-btn.active {
-            background: var(--dark);
-            color: #fff;
-        }
-
-        .panel {
-            display: none;
-            padding: 22px 24px 26px;
-        }
-
-        .panel.active {
-            display: block;
-        }
-
-        .panel p {
-            margin: 0 0 14px;
+        .guide-content p,
+        .guide-content li {
             color: var(--muted);
             line-height: 1.7;
         }
+
+        .guide-intro { margin: 0 0 20px; }
+
+        .guide-section + .guide-section {
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+        }
+
+        .guide-section h3 { margin: 0 0 8px; font-size: 17px; }
+        .guide-section p { margin: 0; }
+        .guide-section ol,
+        .guide-section ul { margin: 0; padding-left: 22px; }
+        .guide-section li + li { margin-top: 6px; }
+        .guide-action { margin-top: 22px; }
 
         .command {
             display: grid;
@@ -491,6 +507,7 @@
 
         .command code {
             color: #f2f2f2;
+            min-width: 0;
             overflow-x: auto;
             white-space: nowrap;
             padding: 4px 2px;
@@ -567,10 +584,6 @@
                 justify-content: flex-end;
             }
 
-            .repo-link {
-                text-align: center;
-            }
-
             .topbar,
             .command {
                 grid-template-columns: 1fr;
@@ -607,6 +620,14 @@
                 margin-bottom: 26px;
             }
 
+            .source-controls { flex-direction: column; }
+            .source-field { flex: none; }
+            .source-card .command { grid-template-columns: 1fr; }
+            .source-card .copy-btn { width: 100%; }
+            .guide-tabs { padding: 12px 16px; }
+            .guide-content { padding: 18px 16px; }
+            .modal { max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); }
+
             .grid {
                 grid-template-columns: 1fr;
                 gap: 18px;
@@ -630,12 +651,6 @@
 <body>
     <div class="page">
         <div class="top-line">
-            <a class="repo-link" href="https://github.com/liyangxu1/keyrun" aria-label="打开 GitHub 仓库">
-                <svg viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M8 0C3.58 0 0 3.67 0 8.2c0 3.62 2.29 6.69 5.47 7.78.4.08.55-.18.55-.4 0-.2-.01-.86-.01-1.56-2.01.38-2.53-.5-2.69-.96-.09-.23-.48-.96-.82-1.15-.28-.16-.68-.55-.01-.56.63-.01 1.08.59 1.23.83.72 1.24 1.87.89 2.33.68.07-.53.28-.89.51-1.09-1.78-.21-3.64-.91-3.64-4.04 0-.89.31-1.62.82-2.19-.08-.21-.36-1.04.08-2.16 0 0 .67-.22 2.2.84A7.4 7.4 0 0 1 8 3.95c.68 0 1.36.09 2 .27 1.53-1.06 2.2-.84 2.2-.84.44 1.12.16 1.95.08 2.16.51.57.82 1.3.82 2.19 0 3.14-1.87 3.83-3.65 4.04.29.26.54.75.54 1.52 0 1.09-.01 1.97-.01 2.24 0 .22.15.48.55.4A8.12 8.12 0 0 0 16 8.2C16 3.67 12.42 0 8 0Z"></path>
-                </svg>
-                <span>GitHub 仓库</span>
-            </a>
             <div class="lang">
                 <select aria-label="语言">
                     <option selected>简体中文</option>
@@ -647,7 +662,7 @@
             <div class="search-wrap">
                 <input class="search" id="search" type="search" placeholder="搜索 IDE 或者产品" autocomplete="off">
             </div>
-            <button class="guide-btn" id="openGuide" type="button">激活指南</button>
+            <button class="guide-btn" id="openGuide" type="button">本地工具指南</button>
         </header>
 
         <section class="hero" aria-labelledby="title">
@@ -661,7 +676,7 @@
                     </div>
                     <h1 id="title"><span>KeyRun JetBrains</span> <span>工具入口</span></h1>
                 </div>
-                <p>提供 Windows、macOS、Linux 三个平台的静态脚本入口，并集中展示当前仓库内维护的 JetBrains 产品文件。使用前请确认你拥有合法授权或测试许可。</p>
+                <p>Windows 本地入口支持配置处理、资源读取和只读路径诊断。macOS 与 Linux 兼容将在后续开发中补充。</p>
             </div>
             <aside class="status-panel" aria-label="项目状态">
                 <h2>当前静态入口</h2>
@@ -683,29 +698,56 @@
         </section>
 
         <section class="quick-commands" aria-labelledby="commandsTitle">
-            <h2 id="commandsTitle">快速命令</h2>
-            <p>关闭正在运行的 JetBrains IDE 后，按你的系统复制对应命令执行。</p>
+            <h2 id="commandsTitle" tabindex="-1">快速命令</h2>
+            <p>选择本地执行或服务器命令示例。执行处理前请备份 IDE 配置并关闭 JetBrains 软件。本地模式无需 HTTP 服务。</p>
+            <div class="source-card">
+                <h3 id="sourceConfigTitle">1. 服务器部署配置（项目维护者使用）</h3>
+                <div class="source-controls">
+                    <div class="source-field">
+                        <label for="sourceMode">资源来源</label>
+                        <select id="sourceMode">
+                            <option value="local">Local · 本地执行</option>
+                            <option value="http" selected>HTTP · 服务器入口</option>
+                        </select>
+                    </div>
+                    <div class="source-field source-http" id="httpAddressField">
+                        <label for="httpBase">HTTP / HTTPS 资源根地址</label>
+                        <input id="httpBase" type="url" value="https://liyangxu1.github.io/keyrun" placeholder="https://liyangxu1.github.io/keyrun" spellcheck="false" autocapitalize="off" aria-describedby="sourceHint" aria-invalid="false">
+                    </div>
+                </div>
+                <div class="command" id="localSourceCommand">
+                    <code id="sourceCommand" aria-live="polite">powershell.exe -NoProfile -File .\switch-source.ps1 -Mode http -HttpBase 'https://liyangxu1.github.io/keyrun'</code>
+                    <button class="copy-btn" id="copySource" type="button" data-copy="powershell.exe -NoProfile -File .\switch-source.ps1 -Mode http -HttpBase 'https://liyangxu1.github.io/keyrun'">复制服务器配置命令</button>
+                </div>
+                <p class="source-hint" id="sourceHint" role="status">默认读取服务器资源。部署者配置根地址后发布项目；本地执行需要先切换 Local。页面选择不会直接修改配置。</p>
+            </div>
             <div class="command-grid">
                 <article class="command-card">
-                    <h3>Windows</h3>
-                    <div class="command">
+                    <h3 data-platform-heading="windows">Windows · 服务器命令</h3>
+                    <div class="command" data-process-platform="windows">
                         <code>irm https://liyangxu1.github.io/keyrun/ps1 | iex</code>
                         <button class="copy-btn" type="button" data-copy="irm https://liyangxu1.github.io/keyrun/ps1 | iex">复制命令</button>
                     </div>
                 </article>
                 <article class="command-card">
-                    <h3>Linux</h3>
-                    <div class="command">
+                    <h3 data-platform-heading="mac">macOS · 服务器命令</h3>
+                    <p data-local-pending hidden>本地兼容待补充，当前安装脚本暂未开放。</p>
+                    <div class="command" data-process-platform="mac">
                         <code>curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash</code>
                         <button class="copy-btn" type="button" data-copy="curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash">复制命令</button>
                     </div>
+                    <p data-server-pending>命令格式示例；当前仓库的 macOS 脚本尚待适配。</p>
+                    <button class="link-btn" type="button" data-open-guide="mac">查看 macOS 指南</button>
                 </article>
                 <article class="command-card">
-                    <h3>macOS</h3>
-                    <div class="command">
+                    <h3 data-platform-heading="linux">Linux · 服务器命令</h3>
+                    <p data-local-pending hidden>本地兼容待补充，当前安装脚本暂未开放。</p>
+                    <div class="command" data-process-platform="linux">
                         <code>curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash</code>
                         <button class="copy-btn" type="button" data-copy="curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash">复制命令</button>
                     </div>
+                    <p data-server-pending>命令格式示例；当前仓库的 Linux 脚本尚待适配。</p>
+                    <button class="link-btn" type="button" data-open-guide="linux">查看 Linux 指南</button>
                 </article>
             </div>
         </section>
@@ -793,127 +835,341 @@
     <div class="overlay" id="guideModal" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
         <div class="modal">
             <div class="modal-head">
-                <h2 id="guideTitle">激活指南</h2>
+                <h2 id="guideTitle">本地工具指南</h2>
                 <button class="close" id="closeGuide" type="button" aria-label="关闭">×</button>
             </div>
-            <div class="tabs" role="tablist" aria-label="平台">
-                <button class="tab-btn active" type="button" data-tab="windows">Windows</button>
-                <button class="tab-btn" type="button" data-tab="linux">Linux</button>
-                <button class="tab-btn" type="button" data-tab="mac">macOS</button>
-                <button class="tab-btn" type="button" data-tab="help">帮助</button>
+            <div class="guide-tabs" role="tablist" aria-label="操作系统指南">
+                <button class="guide-tab" id="guide-tab-windows" type="button" role="tab" aria-selected="true" aria-controls="guide-panel-windows" tabindex="0" data-guide-tab="windows">Windows</button>
+                <button class="guide-tab" id="guide-tab-mac" type="button" role="tab" aria-selected="false" aria-controls="guide-panel-mac" tabindex="-1" data-guide-tab="mac">macOS</button>
+                <button class="guide-tab" id="guide-tab-linux" type="button" role="tab" aria-selected="false" aria-controls="guide-panel-linux" tabindex="-1" data-guide-tab="linux">Linux</button>
             </div>
-            <div class="panel active" data-panel="windows">
-                <p>使用 Win + X 打开 PowerShell 管理员窗口，执行下方命令。</p>
-                <div class="command">
-                    <code>irm https://liyangxu1.github.io/keyrun/ps1 | iex</code>
-                    <button class="copy-btn" type="button" data-copy="irm https://liyangxu1.github.io/keyrun/ps1 | iex">复制命令</button>
+            <div class="guide-content" id="guideContent" tabindex="0">
+                <div id="guide-panel-windows" role="tabpanel" aria-labelledby="guide-tab-windows" data-guide-panel="windows">
+                    <p class="guide-intro">项目初始配置为 HTTP 服务器来源。执行 Local 切换命令后才读取本地；执行服务器配置命令后恢复 HTTP 并保存填写的地址。配置会持续生效，不由网页下拉选择直接改写。</p>
+                    <section class="guide-section">
+                        <h3>1. 准备文件并打开 PowerShell</h3>
+                        <p>保留完整项目目录，确认有 <code>keyrun.ps1</code>、<code>switch-source.ps1</code>、<code>resource-loader.ps1</code>、<code>source-config.json</code>、<code>scripts/</code>、<code>ja-netfilter/</code> 和 <code>licenses/</code>。打开 PowerShell，进入本地项目：</p>
+                        <pre class="guide-command"><code data-guide-windows="cd">Set-Location '你的项目地址'</code></pre>
+                        <p>将「你的项目地址」替换为本机项目文件夹路径，再执行后续相对路径命令。快速命令区会在本地页面中自动填写实际路径。此步骤用于 Local 本地入口。</p>
+                    </section>
+                    <section class="guide-section">
+                        <h3>2. 切换为 Local：直接读取磁盘</h3>
+                        <p>首次本地运行建议使用 Local。在快速命令区选择 Local，复制并执行切换命令：</p>
+                        <pre class="guide-command"><code data-guide-windows="local">powershell.exe -NoProfile -File .\switch-source.ps1 -Mode local</code></pre>
+                        <p>切换成功后，<code>source-config.json</code> 的 <code>mode</code> 为 <code>local</code>。默认根目录是项目所在目录，不依赖 PowerShell 当前工作目录，也不需要启动 HTTP 服务。</p>
+                    </section>
+                    <section class="guide-section">
+                        <h3>3. HTTP：部署项目与使用服务器入口</h3>
+                        <p><strong>项目维护者：</strong>在完整项目目录中执行下面的服务器配置命令，填写实际部署根地址。它会保存 HTTP 来源并更新 Windows 引导脚本内的地址与代码校验信息。完成后将完整项目发布到该 HTTP/HTTPS 根目录：</p>
+                        <pre class="guide-command"><code data-guide-windows="http">powershell.exe -NoProfile -File .\switch-source.ps1 -Mode http -HttpBase 'https://liyangxu1.github.io/keyrun'</code></pre>
+                        <p><strong>最终使用者：</strong>服务器提供完整文件后，打开 PowerShell，确认脚本来源，直接使用服务器命令，无需先下载本地项目或执行本地配置切换：</p>
+                        <pre class="guide-command"><code data-guide-remote="windows">irm https://liyangxu1.github.io/keyrun/ps1 | iex</code></pre>
+                        <p>Windows 引导会获取并校验所需代码，准备临时工作目录，再从服务器读取安装资源。脚本仍在你的电脑上执行，完成后清理临时文件。修改项目代码后，部署者应重新执行服务器配置命令再发布，避免版本校验不一致。</p>
+                        <p>默认旧地址在 2026-10-14 核对时返回 404，只作示例。请换成你实际部署的可信服务地址。服务器配置命令供部署者使用；使用已部署服务不需要本地项目。</p>
+                    </section>
+                    <section class="guide-section">
+                        <h3>4. Local 本地处理命令</h3>
+                        <ol>
+                            <li>先备份 IDE 配置和已有许可证文件，关闭所有 JetBrains 软件。</li>
+                            <li>执行下面的处理命令，按脚本提示继续，并允许管理员权限请求：</li>
+                        </ol>
+                        <pre class="guide-command"><code data-guide-windows="install">powershell.exe -NoProfile -File .\keyrun.ps1 -Install</code></pre>
+                        <p>这是 Local 的本地入口，在第 2 步切换 Local 后运行。脚本会先检查资源，再执行环境变量清理、工作目录部署、Java Agent 启动参数及 key 文件处理。完成后重新打开 IDE 检查结果。</p>
+                    </section>
+                    <section class="guide-section">
+                        <h3>5. 仅查看路径，或处理运行问题</h3>
+                        <p>只读诊断会逐个显示发现的所有配置文件，不运行安装，也无需关闭 IDE：</p>
+                        <pre class="guide-command"><code data-guide-windows="diagnose">powershell.exe -NoProfile -File .\keyrun.ps1 -DiagnoseIdeaPaths</code></pre>
+                        <ul>
+                            <li><strong>仍在请求服务器：</strong>必须执行 Local 切换命令才能改变默认服务器来源。页面选择不保存配置；之前保存的模式会持续生效。</li>
+                            <li><strong>引导校验失败：</strong>部署者重新生成 <code>ps1</code> 并发布匹配版本的代码文件，不能只上传部分更新。</li>
+                            <li><strong>Local 文件缺失：</strong>检查项目资源是否完整，以及配置的 <code>localRoot</code> 是否正确。</li>
+                            <li><strong>HTTP 404、超时或连接失败：</strong>检查根地址、对应资源路径和服务器状态；重定向地址需要换成最终地址。</li>
+                            <li><strong>找不到产品或文件被占用：</strong>查看日志中的安装目录和 <code>.home</code> 提示，确认产品已正确安装并关闭 IDE。</li>
+                            <li><strong>执行策略或管理员权限限制：</strong>按系统或组织的脚本运行要求处理。移动项目后重新打开本地网页，再复制命令。</li>
+                        </ul>
+                    </section>
                 </div>
-            </div>
-            <div class="panel" data-panel="linux">
-                <p>打开终端，确认已安装 curl 和 jq 后执行下方命令。</p>
-                <div class="command">
-                    <code>curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash</code>
-                    <button class="copy-btn" type="button" data-copy="curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash">复制命令</button>
+                <div id="guide-panel-mac" role="tabpanel" aria-labelledby="guide-tab-mac" data-guide-panel="mac" hidden>
+                    <div class="guide-status"><strong>macOS 本地兼容待开发。</strong>服务器命令可以用于访问服务端提供的独立脚本；当前仓库的 shell 入口仍停用，部署者需另行提供经过 Mac 验证的脚本，不能将示例命令当成兼容保证。</div>
+                    <section class="guide-section">
+                        <h3>1. 准备本地项目与终端</h3>
+                        <p>将完整项目放入本地目录，打开「终端」。将「你的项目地址」替换为项目文件夹的实际 POSIX 路径：</p>
+                        <pre class="guide-command"><code>cd '你的项目地址'
+pwd</code></pre>
+                        <p>保留配置、Loader、scripts、ja-netfilter 和 licenses 目录。后续若采用 PowerShell 入口，需要安装 PowerShell 7，并确认终端能找到 <code>pwsh</code>；Windows 的 <code>powershell.exe</code> 不适用于 macOS。</p>
+                    </section>
+                    <section class="guide-section">
+                        <h3>2. Local 的后续适配形式</h3>
+                        <p>以下为本地开发参考，当前 Loader 的本地路径校验尚未适配 macOS。后续完成兼容时，需要显式切换 Local 才从本地项目读取：</p>
+                        <pre class="guide-command"><code># 待适配，当前版本请勿执行
+pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
+                        <p>Local 不需要 HTTP 服务。服务器服务的使用者无需在本机运行这条来源切换命令。</p>
+                    </section>
+                    <section class="guide-section">
+                        <h3>3. HTTP 服务器命令示例</h3>
+                        <p>选择 HTTP 并填写实际服务器根地址，在终端确认脚本来源后使用下面的形式。地址会与页面输入同步，无需先下载本地项目：</p>
+                        <pre class="guide-command"><code data-guide-remote="mac">curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash</code></pre>
+                        <p>服务器需要提供可独立运行且兼容 macOS 的 shell 脚本及资源。默认旧地址在 2026-10-14 核对时返回 404，只作示例；当前仓库的 shell 入口也尚未恢复。Mac 端实际处理能力仍留待后续开发。</p>
+                    </section>
                 </div>
-            </div>
-            <div class="panel" data-panel="mac">
-                <p>打开终端执行下方命令。脚本会在缺少依赖时尝试使用 Homebrew 处理。</p>
-                <div class="command">
-                    <code>curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash</code>
-                    <button class="copy-btn" type="button" data-copy="curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash">复制命令</button>
+                <div id="guide-panel-linux" role="tabpanel" aria-labelledby="guide-tab-linux" data-guide-panel="linux" hidden>
+                    <div class="guide-status"><strong>Linux 本地兼容待开发。</strong>HTTP 命令调用服务端提供的独立脚本。当前仓库 shell 入口仍停用，服务器必须提供已验证的 Linux 脚本后，示例命令才具备实际处理能力。</div>
+                    <section class="guide-section">
+                        <h3>1. 准备本地项目与终端</h3>
+                        <p>在终端进入完整项目目录。Linux 区分文件名大小写，请保留原有目录结构，并将「你的项目地址」替换为实际项目文件夹路径：</p>
+                        <pre class="guide-command"><code>cd '你的项目地址'
+pwd</code></pre>
+                        <p>需要保留 scripts、ja-netfilter、licenses 和来源配置工具。若后续使用 PowerShell 入口，应确认环境中已有 PowerShell 7 与 <code>pwsh</code>；<code>powershell.exe</code> 是 Windows 命令。</p>
+                    </section>
+                    <section class="guide-section">
+                        <h3>2. Local 的后续适配形式</h3>
+                        <p>以下仅供本地开发参考，当前路径验证仍是 Windows 实现。完成兼容后，可从项目目录显式切换 Local：</p>
+                        <pre class="guide-command"><code># 待适配，当前版本请勿执行
+pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
+                        <p>Local 应直接读取磁盘，无需 HTTP 服务。HTTP 服务的使用者不需要执行本地来源切换或准备本地工程。</p>
+                    </section>
+                    <section class="guide-section">
+                        <h3>3. HTTP 服务器命令示例</h3>
+                        <p>选择 HTTP 后填写实际服务器根地址，在终端确认脚本来源后使用服务端引导命令。这里的地址会随页面输入更新：</p>
+                        <pre class="guide-command"><code data-guide-remote="linux">curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash</code></pre>
+                        <p>服务器必须提供兼容 Linux 的独立 shell 脚本和资源。默认旧地址在 2026-10-14 核对时返回 404；仓库 shell 入口尚未恢复，Linux 实际处理能力仍待开发。</p>
+                    </section>
                 </div>
-            </div>
-            <div class="panel" data-panel="help">
-                <div class="notes">
-                    <div class="note">执行脚本前请关闭正在运行的 JetBrains IDE，避免配置文件被占用。</div>
-                    <div class="note">脚本会修改本机 IDE 的 .vmoptions 和用户目录中的配置文件，建议先在可回滚环境中测试。</div>
-                    <div class="note">本页面只展示当前仓库实际存在的脚本入口；没有加入未实现的调试、取消或离线下载路由。</div>
+                <div class="guide-action">
+                    <button class="guide-btn" id="goToCommands" type="button">前往快速命令</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        const sourceMode = document.getElementById("sourceMode");
+        const httpBase = document.getElementById("httpBase");
+        const httpAddressField = document.getElementById("httpAddressField");
+        const sourceCommand = document.getElementById("sourceCommand");
+        const copySource = document.getElementById("copySource");
+        const sourceHint = document.getElementById("sourceHint");
+        const guideTabs = Array.from(document.querySelectorAll("[data-guide-tab]"));
+        const guidePanels = Array.from(document.querySelectorAll("[data-guide-panel]"));
+        const guideContent = document.getElementById("guideContent");
+        const modal = document.getElementById("guideModal");
+        const openGuide = document.getElementById("openGuide");
+        const closeGuide = document.getElementById("closeGuide");
+        let activeGuide = "windows";
+        let previousOverflow = "";
+        let projectDirectory = "";
+
+        if (window.location.protocol === "file:") {
+            try {
+                const pagePath = decodeURIComponent(window.location.pathname);
+                if (/^\/[A-Za-z]:\//.test(pagePath)) {
+                    projectDirectory = pagePath.slice(1, pagePath.lastIndexOf("/") + 1).replace(/\//g, "\\");
+                }
+            } catch (error) {
+                // A malformed file URL keeps the documented relative-path commands.
+            }
+        }
+        function quotePowerShell(value) {
+            return "'" + value.replace(/'/g, "''") + "'";
+        }
+        function windowsCommand(file, args = "", useProjectPath = true) {
+            return "powershell.exe -NoProfile -File " +
+                quotePowerShell(useProjectPath && projectDirectory ? projectDirectory + file : ".\\" + file) +
+                (args ? " " + args : "");
+        }
+        function validateHttpBase(value) {
+            const raw = value.trim();
+            if (!raw) return { error: "请输入 HTTP / HTTPS 资源根地址，填写后即可复制命令。" };
+            try {
+                if (!/^https?:\/\//i.test(raw) || raw.includes("\\") || /[?#]/.test(raw) ||
+                    /^https?:\/\/.*https?:\/\//i.test(raw) || /[\x00-\x1f]/.test(raw)) throw new Error();
+                const parsed = new URL(raw);
+                if (!["http:", "https:"].includes(parsed.protocol) || !parsed.hostname ||
+                    parsed.username || parsed.password) throw new Error();
+                return { base: parsed.href.replace(/\/+$/, "") };
+            } catch (error) {
+                return { error: "请输入有效的 HTTP / HTTPS 根地址；不能包含凭据、查询参数或片段。" };
+            }
+        }
+        const defaultServerBase = "https://liyangxu1.github.io/keyrun";
+        function quoteServerUrl(url, platform) {
+            if (/^[A-Za-z0-9:/.%_+-]+$/.test(url)) return url;
+            if (platform === "windows") return quotePowerShell(url);
+            return "'" + url.replace(/'/g, "'\"'\"'") + "'";
+        }
+        function serverCommand(platform, base) {
+            const relative = platform === "windows" ? "/ps1" : "/scripts/install.sh";
+            const url = quoteServerUrl(base + relative, platform);
+            return platform === "windows" ? "irm " + url + " | iex" : "curl -fsSL " + url + " | bash";
+        }
+        function updateSourceCommand() {
+            const isHttp = sourceMode.value === "http";
+            httpAddressField.hidden = !isHttp;
+            const validation = validateHttpBase(httpBase.value);
+            const valid = !isHttp || Boolean(validation.base);
+            const args = isHttp
+                ? "-Mode http -HttpBase " + quotePowerShell(validation.base || "请填写资源根地址")
+                : "-Mode local";
+            const command = windowsCommand("switch-source.ps1", args);
+            sourceCommand.textContent = command;
+            copySource.dataset.copy = valid ? command : "";
+            copySource.disabled = !valid;
+            copySource.textContent = isHttp ? "复制服务器配置命令" : "复制 Local 切换命令";
+            document.getElementById("sourceConfigTitle").textContent = isHttp
+                ? "1. 服务器部署配置（项目维护者使用）" : "1. 切换为 Local 本地读取";
+            const inputError = isHttp && Boolean(httpBase.value.trim()) && !validation.base;
+            const isDefault = isHttp && validation.base === defaultServerBase;
+            httpBase.setAttribute("aria-invalid", String(inputError));
+            sourceHint.classList.toggle("is-error", inputError || isDefault);
+            sourceHint.textContent = isHttp && !valid ? validation.error : isHttp
+                ? (isDefault
+                    ? "默认示例地址在 2026-10-14 核对时返回 404。部署者需换成实际地址并执行配置命令；最终使用者直接运行下方服务器命令即可。"
+                    : "部署项目时执行配置命令，保存地址并更新 Windows 服务器引导。最终使用者直接运行下方服务器命令，无需本地项目或本地模式切换。")
+                : "必须先执行 Local 切换命令再运行本地处理；未切换时，项目默认仍从服务器读取资源。网页选择不直接修改配置。";
+
+            const labels = {windows:"Windows", mac:"macOS", linux:"Linux"};
+            document.querySelectorAll("[data-platform-heading]").forEach(heading => {
+                const platform = heading.dataset.platformHeading;
+                heading.textContent = labels[platform] + (isHttp ? " · 服务器命令" : platform === "windows" ? " · 本地处理" : " · 本地待适配");
+            });
+            document.querySelectorAll("[data-local-pending]").forEach(note => { note.hidden = isHttp; });
+            document.querySelectorAll("[data-server-pending]").forEach(note => { note.hidden = !isHttp; });
+            document.querySelectorAll("[data-process-platform]").forEach(block => {
+                const platform = block.dataset.processPlatform;
+                block.hidden = !isHttp && platform !== "windows";
+                const text = isHttp
+                    ? (validation.base ? serverCommand(platform, validation.base) : "请输入有效服务器地址以生成命令")
+                    : windowsCommand("keyrun.ps1", "-Install");
+                block.querySelector("code").textContent = text;
+                const button = block.querySelector(".copy-btn");
+                button.disabled = isHttp ? !validation.base : platform !== "windows";
+                button.dataset.copy = button.disabled ? "" : text;
+                button.textContent = "复制命令";
+            });
+            const examples = {
+                cd: "Set-Location '你的项目地址'",
+                local: windowsCommand("switch-source.ps1", "-Mode local", false),
+                http: windowsCommand("switch-source.ps1", "-Mode http -HttpBase " + quotePowerShell(validation.base || defaultServerBase), false),
+                install: windowsCommand("keyrun.ps1", "-Install", false),
+                diagnose: windowsCommand("keyrun.ps1", "-DiagnoseIdeaPaths", false)
+            };
+            document.querySelectorAll("[data-guide-windows]").forEach(code => {
+                code.textContent = examples[code.dataset.guideWindows];
+            });
+            document.querySelectorAll("[data-guide-remote]").forEach(code => {
+                code.textContent = serverCommand(code.dataset.guideRemote, validation.base || defaultServerBase);
+            });
+        }
+
+        sourceMode.addEventListener("change", updateSourceCommand);
+        httpBase.addEventListener("input", updateSourceCommand);
+        updateSourceCommand();
+
+        function selectGuide(name, focus = false) {
+            if (!guideTabs.some(tab => tab.dataset.guideTab === name)) return;
+            activeGuide = name;
+            guideTabs.forEach(tab => {
+                const selected = tab.dataset.guideTab === name;
+                tab.setAttribute("aria-selected", String(selected));
+                tab.tabIndex = selected ? 0 : -1;
+                if (selected && focus) tab.focus();
+            });
+            guidePanels.forEach(panel => { panel.hidden = panel.dataset.guidePanel !== name; });
+            guideContent.scrollTop = 0;
+        }
+        guideTabs.forEach((tab, index) => {
+            tab.addEventListener("click", () => selectGuide(tab.dataset.guideTab));
+            tab.addEventListener("keydown", event => {
+                let next = index;
+                if (event.key === "ArrowRight") next = (index + 1) % guideTabs.length;
+                else if (event.key === "ArrowLeft") next = (index + guideTabs.length - 1) % guideTabs.length;
+                else if (event.key === "Home") next = 0;
+                else if (event.key === "End") next = guideTabs.length - 1;
+                else return;
+                event.preventDefault();
+                selectGuide(guideTabs[next].dataset.guideTab, true);
+            });
+        });
+        function openModal(platform = activeGuide) {
+            selectGuide(platform);
+            previousOverflow = document.body.style.overflow;
+            document.body.style.overflow = "hidden";
+            modal.classList.add("open");
+            document.getElementById("guide-tab-" + activeGuide).focus();
+        }
+        function closeModal() {
+            modal.classList.remove("open");
+            document.body.style.overflow = previousOverflow;
+            openGuide.focus();
+        }
+        openGuide.addEventListener("click", () => openModal());
+        document.querySelectorAll("[data-open-guide]").forEach(button => {
+            button.addEventListener("click", () => openModal(button.dataset.openGuide));
+        });
+        closeGuide.addEventListener("click", closeModal);
+        modal.addEventListener("click", event => {
+            if (event.target === modal) closeModal();
+        });
+        document.addEventListener("keydown", event => {
+            if (!modal.classList.contains("open")) return;
+            if (event.key === "Escape") closeModal();
+            if (event.key === "Tab") {
+                const controls = Array.from(modal.querySelectorAll("button, [href], input, select, [tabindex]"))
+                    .filter(element => !element.disabled && element.tabIndex >= 0 && !element.closest("[hidden]"));
+                const first = controls[0], last = controls[controls.length - 1];
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+            }
+        });
+        document.getElementById("goToCommands").addEventListener("click", () => {
+            closeModal();
+            const title = document.getElementById("commandsTitle");
+            title.scrollIntoView({ block: "start" });
+            title.focus({ preventScroll: true });
+        });
+
+        async function copyText(text, button) {
+            if (!text || button.disabled) return;
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (error) {
+                const input = document.createElement("textarea");
+                input.value = text;
+                input.style.position = "fixed";
+                input.style.opacity = "0";
+                document.body.appendChild(input);
+                input.select();
+                const copied = document.execCommand("copy");
+                document.body.removeChild(input);
+                button.focus();
+                if (!copied) { button.textContent = "请手动复制"; return; }
+            }
+            const oldText = button.textContent;
+            button.textContent = "已复制";
+            window.setTimeout(() => { button.textContent = oldText; }, 1600);
+        }
+        document.querySelectorAll("[data-copy]").forEach(button => {
+            button.addEventListener("click", () => copyText(button.dataset.copy, button));
+        });
+
         const search = document.getElementById("search");
         const cards = Array.from(document.querySelectorAll(".product"));
         const countText = document.getElementById("countText");
         const emptyState = document.getElementById("emptyState");
-        const modal = document.getElementById("guideModal");
-        const openGuide = document.getElementById("openGuide");
-        const closeGuide = document.getElementById("closeGuide");
-        const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
-        const panels = Array.from(document.querySelectorAll(".panel"));
-
         function setCount(count) {
-            countText.textContent = `已展示 ${count} 个产品`;
+            countText.textContent = "已展示 " + count + " 个产品";
             emptyState.style.display = count === 0 ? "block" : "none";
         }
-
-        function filterProducts() {
+        search.addEventListener("input", () => {
             const keyword = search.value.trim().toLowerCase();
             let visible = 0;
-
-            cards.forEach((card) => {
+            cards.forEach(card => {
                 const matched = card.dataset.name.toLowerCase().includes(keyword);
                 card.style.display = matched ? "flex" : "none";
-                if (matched) visible += 1;
+                if (matched) visible++;
             });
-
             setCount(visible);
-        }
-
-        function openModal() {
-            modal.classList.add("open");
-            closeGuide.focus();
-        }
-
-        function closeModal() {
-            modal.classList.remove("open");
-            openGuide.focus();
-        }
-
-        function switchTab(name) {
-            tabButtons.forEach((button) => {
-                button.classList.toggle("active", button.dataset.tab === name);
-            });
-            panels.forEach((panel) => {
-                panel.classList.toggle("active", panel.dataset.panel === name);
-            });
-        }
-
-        async function copyText(text, button) {
-            try {
-                await navigator.clipboard.writeText(text);
-                const oldText = button.textContent;
-                button.textContent = "已复制";
-                window.setTimeout(() => {
-                    button.textContent = oldText;
-                }, 1600);
-            } catch (error) {
-                const input = document.createElement("textarea");
-                input.value = text;
-                document.body.appendChild(input);
-                input.select();
-                document.execCommand("copy");
-                document.body.removeChild(input);
-                button.textContent = "已复制";
-            }
-        }
-
-        search.addEventListener("input", filterProducts);
-        openGuide.addEventListener("click", openModal);
-        closeGuide.addEventListener("click", closeModal);
-        modal.addEventListener("click", (event) => {
-            if (event.target === modal) closeModal();
-        });
-        document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape" && modal.classList.contains("open")) closeModal();
-        });
-        tabButtons.forEach((button) => {
-            button.addEventListener("click", () => switchTab(button.dataset.tab));
-        });
-        document.querySelectorAll("[data-copy]").forEach((button) => {
-            button.addEventListener("click", () => copyText(button.dataset.copy, button));
         });
         setCount(cards.length);
     </script>

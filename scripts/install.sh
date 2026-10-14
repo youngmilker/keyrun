@@ -1,4 +1,7 @@
 #!/bin/bash
+printf '%s\n' 'Legacy activation/Java Agent installer disabled. See README.md for ordinary resource tools.' >&2
+return 1 2>/dev/null || exit 1
+
 #set -e
 
 # ============ 平台检测 =============

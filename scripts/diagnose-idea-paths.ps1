@@ -1,4 +1,4 @@
-# encoding: utf-8
+﻿# encoding: utf-8
 
 param(
     [string]$PropertiesPath
@@ -44,7 +44,7 @@ function Resolve-IdeaPropertiesPath([string]$InputPath)
 function Add-Candidate([System.Collections.ArrayList]$Candidates, [string]$Path)
 {
     $resolvedPath = Resolve-IdeaPropertiesPath $Path
-    if ($null -ne $resolvedPath -and -not $Candidates.Contains($resolvedPath))
+    if ($null -ne $resolvedPath -and -not ($Candidates -contains $resolvedPath))
     {
         [void]$Candidates.Add($resolvedPath)
     }
@@ -143,7 +143,7 @@ function Get-IdeaPropertyValues([string]$PropertyFilePath)
     $properties = @{}
     Get-Content -LiteralPath $PropertyFilePath -Encoding UTF8 -ErrorAction Stop | ForEach-Object {
         $line = $_.Trim()
-        if ($line -and -not $line.StartsWith("#") -and $line -match "^\\s*([^#=]+?)\\s*=\\s*(.*)$")
+        if ($line -and -not $line.StartsWith("#") -and $line -match '^\s*([^#=]+?)\s*=\s*(.*)$')
         {
             $properties[$matches[1].Trim()] = $matches[2].Trim()
         }
@@ -166,57 +166,64 @@ function Show-PathStatus([string]$Name, [string]$Path)
 
 function Invoke-IdeaPathDiagnosis
 {
-    $propertyFile = Resolve-IdeaPropertiesPath $PropertiesPath
-    if ($null -eq $propertyFile)
+    $propertyFiles = New-Object System.Collections.ArrayList
+    if (-not [string]::IsNullOrWhiteSpace($PropertiesPath))
     {
-        $candidates = Get-IdeaPropertiesCandidates
-        if ($candidates.Count -eq 1)
+        $propertyFile = Resolve-IdeaPropertiesPath $PropertiesPath
+        if ($null -eq $propertyFile)
         {
-            $propertyFile = $candidates[0]
+            throw "指定的路径中未找到有效的 idea.properties：$PropertiesPath"
         }
-        elseif ($candidates.Count -gt 1)
-        {
-            Write-Host "找到多个 idea.properties 文件，请使用 -PropertiesPath 指定其中一个：" -ForegroundColor Yellow
-            $candidates | ForEach-Object { Write-Host "  $_" }
-            return
-        }
+        [void]$propertyFiles.Add($propertyFile)
+    }
+    else
+    {
+        $propertyFiles = Get-IdeaPropertiesCandidates
     }
 
-    if ($null -eq $propertyFile)
+    if ($propertyFiles.Count -eq 0)
     {
         Write-Host "未在官方默认目录或标准安装目录中找到 idea.properties。" -ForegroundColor Yellow
         $manualPath = Read-Host "请输入 idea.properties 完整路径或 IDE 安装目录"
         $propertyFile = Resolve-IdeaPropertiesPath $manualPath
+        if ($null -eq $propertyFile)
+        {
+            throw "未找到有效的 idea.properties。请确认 IDE 已按标准方式安装，或提供正确路径。"
+        }
+        [void]$propertyFiles.Add($propertyFile)
     }
 
-    if ($null -eq $propertyFile)
+    Write-Host ("找到 {0} 个 idea.properties 文件，将逐个进行只读诊断。" -f $propertyFiles.Count) -ForegroundColor Cyan
+    $index = 0
+    $failed = 0
+    foreach ($propertyFile in $propertyFiles)
     {
-        Write-Error "未找到有效的 idea.properties。请确认 IDE 已按标准方式安装，或提供正确路径。"
-        return
+        $index++
+        Write-Host ("`n[{0}/{1}] JetBrains 配置路径诊断结果" -f $index, $propertyFiles.Count) -ForegroundColor Cyan
+        Write-Host ("idea.properties: {0}" -f $propertyFile)
+        try
+        {
+            $properties = Get-IdeaPropertyValues $propertyFile
+            $configPath = Resolve-ConfiguredPath $properties["idea.config.path"] $propertyFile
+            $systemPath = Resolve-ConfiguredPath $properties["idea.system.path"] $propertyFile
+            Show-PathStatus "idea.config.path" $configPath
+            Show-PathStatus "idea.system.path" $systemPath
+            if ($configPath -and $systemPath -and $configPath -ieq $systemPath)
+            {
+                Write-Warning "idea.config.path 与 idea.system.path 不能使用同一目录。"
+            }
+        }
+        catch
+        {
+            $failed++
+            Write-Warning ("诊断失败：{0}；原因：{1}" -f $propertyFile, $_.Exception.Message)
+        }
     }
-
-    try
+    if ($failed -gt 0)
     {
-        $properties = Get-IdeaPropertyValues $propertyFile
+        throw ("诊断结束：{0} 个成功，{1} 个失败。详见以上错误。" -f ($propertyFiles.Count - $failed), $failed)
     }
-    catch
-    {
-        Write-Error ("读取 idea.properties 失败：{0}" -f $_.Exception.Message)
-        return
-    }
-
-    $configPath = Resolve-ConfiguredPath $properties["idea.config.path"] $propertyFile
-    $systemPath = Resolve-ConfiguredPath $properties["idea.system.path"] $propertyFile
-
-    Write-Host "`nJetBrains 配置路径诊断结果" -ForegroundColor Cyan
-    Write-Host ("idea.properties: {0}" -f $propertyFile)
-    Show-PathStatus "idea.config.path" $configPath
-    Show-PathStatus "idea.system.path" $systemPath
-
-    if ($configPath -and $systemPath -and $configPath -ieq $systemPath)
-    {
-        Write-Warning "idea.config.path 与 idea.system.path 不能使用同一目录。"
-    }
+    Write-Host ("`n诊断完成，共检查 {0} 个配置文件。" -f $propertyFiles.Count) -ForegroundColor Green
 }
 
 Invoke-IdeaPathDiagnosis

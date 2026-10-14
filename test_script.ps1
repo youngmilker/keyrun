@@ -1,3 +1,6 @@
+﻿# Legacy authorization workflow is isolated; do not reconnect its downloads.
+throw 'This legacy activation/Java Agent installer is disabled. Use the local keyrun.ps1 entry for ordinary resources or read-only diagnostics.'
+
 # encoding: utf-8
 
 Clear-Host

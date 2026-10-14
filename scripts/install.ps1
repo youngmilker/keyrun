@@ -1,4 +1,9 @@
-# encoding: utf-8
+﻿# encoding: utf-8
+param([switch]$OpenPage)
+$ErrorActionPreference = 'Stop'
+$script:InstallerPath = $PSCommandPath
+$script:ProjectRoot = Split-Path $PSScriptRoot -Parent
+. (Join-Path $script:ProjectRoot 'resource-loader.ps1')
 
 # 先设置控制台代码页为 UTF-8
 chcp 65001 | Out-Null
@@ -100,8 +105,8 @@ function Get-i18nString
             "en" = "Key already exists, cleaning..."
         }
         "activation_success" = @{
-            "zh" = "{0} 激活成功！"
-            "en" = "{0} activated successfully!"
+            "zh" = "{0} 配置文件写入完成。"
+            "en" = "{0} configuration files written."
         }
         "manual_activation_required" = @{
             "zh" = "{0} 需要手动输入激活码！"
@@ -120,8 +125,8 @@ function Get-i18nString
             "en" = "File is in use, please close all JetBrains IDEs and try again!"
         }
         "processing_completed" = @{
-            "zh" = "`n所有项处理完成，如需激活码，请访问网站获取！"
-            "en" = "`nAll items processed. If you need an activation code, please visit the website!"
+            "zh" = "`n所有项处理完成，请重新打开 IDE 检查配置结果。"
+            "en" = "`nAll items processed. Reopen the IDE to check the configuration."
         }
         "format_error" = @{
             "zh" = "格式错误：请使用 yyyy-MM-dd 格式"
@@ -375,24 +380,7 @@ function Write-ProgressCustom([string]$message, [string]$progress_bar, [double]$
 }
 
 # 创建 HttpClient 实例
-function Get-HttP_Client([int]$timeout_seconds = 30)
-{
-    Add-Type -AssemblyName System.Net.Http
-    $handler = New-Object System.Net.Http.HttpClientHandler
-    $handler.UseDefaultCredentials = $true
-    $handler.Proxy = [System.Net.GlobalProxySelection]::GetEmptyWebProxy()
 
-    $obj_http_client = New-Object System.Net.Http.HttpClient($handler)
-    $obj_http_client.Timeout = [System.TimeSpan]::FromSeconds($timeout_seconds)
-
-    # 设置 User-Agent
-    $os_version = [Environment]::OSVersion.Version.ToString()
-    $powershell_ver = $PSVersionTable.PSVersion.ToString()
-    $ua = "PowerShell/$powershell_ver (Windows NT $os_version)"
-    $obj_http_client.DefaultRequestHeaders.UserAgent.ParseAdd($ua)
-
-    return $obj_http_client
-}
 
 # 读取日期输入
 function Read-Valid_Date([string]$prompt, [string]$default = "2099-12-31")
@@ -507,87 +495,110 @@ function Remove_Env([string]$env_scope, [array]$products)
 # 创建工作目录
 function Create_Work_Dir
 {
+    $expected = [IO.Path]::GetFullPath((Join-Path $script:PublicRoot '.jb_run')).TrimEnd('\')
+    $actual = [IO.Path]::GetFullPath($script:dir_work).TrimEnd('\')
+    if (-not $actual.Equals($expected, [StringComparison]::OrdinalIgnoreCase)) { throw "Unexpected work directory: $actual" }
+    $ancestor = $script:PublicRoot
+    while ($ancestor)
+    {
+        $item = Get-Item -LiteralPath $ancestor -Force -ErrorAction Stop
+        if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw "Unsafe work directory ancestor: $ancestor" }
+        $ancestor = [IO.Path]::GetDirectoryName($ancestor)
+    }
+    if (Test-Path -LiteralPath $actual)
+    {
+        $queue = New-Object 'Collections.Generic.Queue[string]'
+        $queue.Enqueue($actual)
+        while ($queue.Count -gt 0)
+        {
+            $directory = $queue.Dequeue()
+            $item = Get-Item -LiteralPath $directory -Force -ErrorAction Stop
+            if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw "Unsafe work directory: $directory" }
+            foreach ($child in Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop)
+            {
+                if (($child.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw "Unsafe work directory entry: $($child.FullName)" }
+                if ($child.PSIsContainer) { $queue.Enqueue($child.FullName) }
+            }
+        }
+    }
     try
     {
-        if (Test-Path -Path $script:dir_work)
-        {
-            Remove-Item -Path $script:dir_work -Recurse -Force -ErrorAction Stop
-        }
-        New-Item -Path $script:dir_work -ItemType Directory -Force | Out-Null
+        if (Test-Path -LiteralPath $actual) { Remove-Item -LiteralPath $actual -Recurse -Force -ErrorAction Stop }
+        New-Item -Path $actual -ItemType Directory -Force | Out-Null
         New-Item -Path $script:dir_config -ItemType Directory -Force | Out-Null
         New-Item -Path $script:dir_plugins -ItemType Directory -Force | Out-Null
     }
-    catch
-    {
-        Error (Get-i18nString "file_in_use")
-        Exit-Program
-    }
+    catch { throw "Cannot create work directory '$actual': $($_.Exception.Message)" }
 }
 
 # 下载文件
-function File_Download
+function Get-Install_File_Plan
 {
-    $files = @(
-        @{ url = "$script:url_download/ja-netfilter.jar"; save_path = $script:file_netfilter_jar },
-        @{ url = "$script:url_download/config/dns.conf"; save_path = [IO.Path]::Combine($script:dir_config, "dns.conf") },
-        @{ url = "$script:url_download/config/env.conf"; save_path = [IO.Path]::Combine($script:dir_config, "dns.conf") },
-        @{ url = "$script:url_download/config/native.conf"; save_path = [IO.Path]::Combine($script:dir_config, "native.conf") },
-        @{ url = "$script:url_download/config/power.conf"; save_path = [IO.Path]::Combine($script:dir_config, "power.conf") },
-        @{ url = "$script:url_download/config/url.conf"; save_path = [IO.Path]::Combine($script:dir_config, "url.conf") },
-
-        @{ url = "$script:url_download/plugins/dns.jar"; save_path = [IO.Path]::Combine($script:dir_plugins, "dns.jar") },
-        @{ url = "$script:url_download/plugins/env.jar"; save_path = [IO.Path]::Combine($script:dir_plugins, "dns.jar") },
-        @{ url = "$script:url_download/plugins/native.jar"; save_path = [IO.Path]::Combine($script:dir_plugins, "native.jar") },
-        @{ url = "$script:url_download/plugins/power.jar"; save_path = [IO.Path]::Combine($script:dir_plugins, "power.jar") },
-        @{ url = "$script:url_download/plugins/url.jar"; save_path = [IO.Path]::Combine($script:dir_plugins, "url.jar") },
-        @{ url = "$script:url_download/plugins/hideme.jar"; save_path = [IO.Path]::Combine($script:dir_plugins, "hideme.jar") },
-        @{ url = "$script:url_download/plugins/privacy.jar"; save_path = [IO.Path]::Combine($script:dir_plugins, "privacy.jar") }
-    )
-
-    $obj_http_client = Get-HttP_Client
-    $total_files = $files.Count
-    $current_file = 0
-
-    Debug (Get-i18nString "source_address")
-    Debug (Get-i18nString "source_privacy")
-    Debug (Get-i18nString "suggest_check_sha1")
-
-    foreach ($file in $files)
+    @{ resource = 'ja-netfilter/ja-netfilter.jar'; save_path = $script:file_netfilter_jar }
+    foreach ($name in @('dns', 'env', 'native', 'power', 'url'))
     {
-        $current_file++
-        $percent = [math]::Round(($current_file / $total_files) * 100, 2)
-        $bar_length = 30
-        $filled_bars = [math]::Floor($percent / (100 / $bar_length))
-        $progress_bar = "[" + ("#" * $filled_bars) + ("." * ($bar_length - $filled_bars)) + "]"
+        @{ resource = "ja-netfilter/config/$name.conf"; save_path = [IO.Path]::Combine($script:dir_config, "$name.conf") }
+    }
+    foreach ($name in @('dns', 'env', 'native', 'power', 'url', 'hideme', 'privacy'))
+    {
+        @{ resource = "ja-netfilter/plugins/$name.jar"; save_path = [IO.Path]::Combine($script:dir_plugins, "$name.jar") }
+    }
+}
 
-        Write-ProgressCustom -message (Get-i18nString "configuring_ja_netfilter") -progress_bar $progress_bar -percent $percent -color Green
-
+# Read all resources before environment, work-directory or IDE changes.
+function Initialize-Install_Resources
+{
+    $script:InstallResources = @{}
+    $resources = @((Get-Install_File_Plan | ForEach-Object { $_.resource }))
+    $resources += @($script:sPrds | ForEach-Object { "licenses/$($_.name).key" })
+    foreach ($relativePath in $resources)
+    {
         try
         {
-            $response = $obj_http_client.GetAsync($file.url).Result
-            $response.EnsureSuccessStatusCode() | Out-Null
-            $content = $response.Content.ReadAsByteArrayAsync().Result
-            [System.IO.File]::WriteAllBytes($file.save_path, $content)
+            [byte[]]$bytes = Get-KeyRunResourceBytes -RelativePath $relativePath
+            if ($bytes.Length -eq 0) { throw 'Resource is empty.' }
+            $script:InstallResources[$relativePath] = $bytes
+        }
+        catch { throw "Install resource read failed '$relativePath': $($_.Exception.Message)" }
+    }
+    Write-Host ("资源预检完成：{0} 个文件。" -f $script:InstallResources.Count) -ForegroundColor Green
+}
 
-            if ( $file.url.Contains(".jar"))
+function Get-Install_ResourceBytes([string]$RelativePath)
+{
+    if ($null -eq $script:InstallResources -or -not $script:InstallResources.ContainsKey($RelativePath))
+    {
+        throw "Install resource was not preloaded: $RelativePath"
+    }
+    return ,([byte[]]$script:InstallResources[$RelativePath])
+}
+
+# Deploy bytes already read through the Loader.
+function File_Download
+{
+    $files = @(Get-Install_File_Plan)
+    $current = 0
+    foreach ($file in $files)
+    {
+        $current++
+        $percent = [math]::Round(($current / $files.Count) * 100, 2)
+        $filled = [math]::Floor($percent / (100 / 30))
+        $bar = '[' + ('#' * $filled) + ('.' * (30 - $filled)) + ']'
+        Write-ProgressCustom -message (Get-i18nString 'configuring_ja_netfilter') -progress_bar $bar -percent $percent -color Green
+        try
+        {
+            $content = Get-Install_ResourceBytes $file.resource
+            [IO.File]::WriteAllBytes($file.save_path, $content)
+            if ($file.resource.EndsWith('.jar'))
             {
-                $sha1 = [BitConverter]::ToString([Security.Cryptography.SHA1]::Create().ComputeHash($content))
-                $msg = Get-i18nString "sha1_info"
-                Debug ($msg -f $file.url, $sha1)
+                $hashAlgorithm = [Security.Cryptography.SHA1]::Create()
+                try { $sha1 = [BitConverter]::ToString($hashAlgorithm.ComputeHash($content)) }
+                finally { $hashAlgorithm.Dispose() }
+                Debug ((Get-i18nString 'sha1_info') -f $file.resource, $sha1)
             }
         }
-        catch
-        {
-            $msg = Get-i18nString "download_failed"
-            Error ($msg -f $file.url)
-            $msg = Get-i18nString "request_fail"
-            Debug ($msg -f $_.Exception.Message)
-            $obj_http_client.CancelPendingRequests()
-            Exit-Program
-        }
+        catch { throw "Install resource write failed '$($file.resource)' to '$($file.save_path)': $($_.Exception.Message)" }
     }
-
-    $obj_http_client.Dispose()
 }
 
 # 清理 vmoptions 文件
@@ -695,16 +706,13 @@ function Create_Key([hashtable]$product, [string]$prd_full_name, [string]$custom
         Remove-Item -Path $file_key -Force
     }
 
-    # 静态托管：直接下载预生成的 License 文件
-    $license_url = "$script:url_license/$($product.name).key"
+    # Preserve the original key bytes from the configured source.
+    $license_resource = "licenses/$($product.name).key"
     $msg = Get-i18nString "requesting_key"
-    Debug ($msg -f $license_url, $product.name, $file_key)
-    $obj_http_client = Get-HttP_Client
+    Debug ($msg -f $license_resource, $product.name, $file_key)
     try
     {
-        $response = $obj_http_client.GetAsync($license_url).Result
-        $response.EnsureSuccessStatusCode() | Out-Null
-        $key_bytes = $response.Content.ReadAsByteArrayAsync().Result
+        $key_bytes = Get-Install_ResourceBytes $license_resource
         $msg = Get-i18nString "writing_key"
         Debug ($msg -f $file_key)
         [System.IO.File]::WriteAllBytes($file_key, $key_bytes)
@@ -712,17 +720,7 @@ function Create_Key([hashtable]$product, [string]$prd_full_name, [string]$custom
         $msg = Get-i18nString "activation_success"
         Success ($msg -f $prd_full_name)
     }
-    catch
-    {
-        $msg = Get-i18nString "manual_activation_required"
-        Warning ($msg -f $prd_full_name)
-        $msg = Get-i18nString "request_failed"
-        Debug ($msg -f $prd_full_name, $_.Exception.Message)
-    }
-    finally
-    {
-        $obj_http_client.Dispose()
-    }
+    catch { throw "Key processing failed '$prd_full_name': $($_.Exception.Message)" }
 }
 
 # 处理所有 JetBrains 产品
@@ -824,6 +822,7 @@ function Read_Host_License_Info
 # 主程序入口
 function Main
 {
+    $source = Get-KeyRunSourceConfig
     Show-Ascii_Jetbrains
     Log (Get-i18nString "welcome_msg")
     Warning (Get-i18nString "script_date")
@@ -834,8 +833,15 @@ function Main
     {
         Warning (Get-i18nString "admin_request")
         $null = Read-Host
-        Start-Process powershell.exe -ArgumentList "-Command irm https://liyangxu1.github.io/keyrun/ps1 | iex" -Verb RunAs
-        exit -1
+        $powershellPath = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::System)) 'WindowsPowerShell\v1.0\powershell.exe'
+        $launchArguments = @('-NoProfile', '-File', ('"{0}"' -f $script:InstallerPath))
+        if ($OpenPage) { $launchArguments += '-OpenPage' }
+        try
+        {
+            $process = Start-Process -FilePath $powershellPath -ArgumentList $launchArguments -Verb RunAs -WorkingDirectory $script:ProjectRoot -WindowStyle Normal -Wait -PassThru
+            exit $process.ExitCode
+        }
+        catch { throw "Cannot start the local installer with administrator rights: $($_.Exception.Message)" }
     }
 
 
@@ -843,13 +849,12 @@ function Main
     $null = Read-Host
 
     # 初始化全局变量
-    $user_path = [Environment]::GetEnvironmentVariable("USERPROFILE")
-    $public_path = [Environment]::GetEnvironmentVariable("PUBLIC")
-    # GitHub Pages 静态托管地址
-    $script:url_base = "https://liyangxu1.github.io/keyrun"
-    $script:url_download = "$script:url_base/ja-netfilter"
-    # 静态托管使用预生成的 License 文件
-    $script:url_license = "$script:url_base/licenses"
+    $user_path = [Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)
+    $publicDocuments = [Environment]::GetFolderPath([Environment+SpecialFolder]::CommonDocuments)
+    if ([string]::IsNullOrWhiteSpace($publicDocuments)) { throw 'Cannot locate the Windows public directory.' }
+    $script:PublicRoot = Split-Path $publicDocuments -Parent
+    $public_path = $script:PublicRoot
+    Write-Host ("资源来源：{0}" -f $source.mode) -ForegroundColor Cyan
 
     $script:dir_work = "$public_path\.jb_run\"
     $script:dir_config = "$script:dir_work\config\"
@@ -891,6 +896,7 @@ function Main
         productCode = ""
     }
 
+    Initialize-Install_Resources
     # 开始执行主流程
     Read_Host_License_Info
     Log (Get-i18nString "processing")
@@ -907,11 +913,20 @@ function Main
     $author = [char]0x9152 + [char]0x6C8F + [char]0x8336  # 酒沏茶
     Write-Host "`n========================================" -ForegroundColor Cyan
     Write-Host "  Powered by $author | KeyRun" -ForegroundColor Green
-    Write-Host "  https://liyangxu1.github.io/keyrun" -ForegroundColor DarkGray
+    $sourceLocation = if ($source.mode -eq 'local') { $source.localRoot } else { $source.httpBase }
+    Write-Host ("  Source: {0}" -f $sourceLocation) -ForegroundColor DarkGray
     Write-Host "========================================`n" -ForegroundColor Cyan
     Start-Sleep -s 2
-    Start-Process "https://liyangxu1.github.io/keyrun"
+    if ($OpenPage)
+    {
+        try { $page = Resolve-KeyRunResource 'index.html'; Start-Process -FilePath $page.Location }
+        catch { Write-Warning ("处理已完成，但打开页面失败：{0}" -f $_.Exception.Message) }
+    }
     $null = Read-Host
 }
 
-Main
+try { Main }
+catch {
+    Write-Error ("KeyRun failed: {0}" -f $_.Exception.Message) -ErrorAction Continue
+    exit 1
+}

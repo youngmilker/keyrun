@@ -3,6 +3,10 @@
 *.log
 generate_licenses.ps1
 
+# 本地改造备份
+/backups/
+*.bak
+
 # IDE
 .idea/
 .vscode/

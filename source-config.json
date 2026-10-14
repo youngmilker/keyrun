@@ -1,0 +1,6 @@
+{
+  "mode": "http",
+  "localRoot": ".",
+  "httpBase": "https://liyangxu1.github.io/keyrun",
+  "timeoutSeconds": 20
+}
