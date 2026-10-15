@@ -676,7 +676,7 @@
                     </div>
                     <h1 id="title"><span>KeyRun JetBrains</span> <span>工具入口</span></h1>
                 </div>
-                <p>Windows 本地入口支持配置处理、资源读取和只读路径诊断。macOS 与 Linux 兼容将在后续开发中补充。</p>
+                <p>Windows、macOS 与 Linux 提供本地配置处理、资源读取和只读路径诊断。首次使用请先运行预览，确认识别到的 IDE 配置目录。</p>
             </div>
             <aside class="status-panel" aria-label="项目状态">
                 <h2>当前静态入口</h2>
@@ -703,6 +703,14 @@
             <div class="source-card">
                 <h3 id="sourceConfigTitle">1. 服务器部署配置（项目维护者使用）</h3>
                 <div class="source-controls">
+                    <div class="source-field">
+                        <label for="commandPlatform">执行平台</label>
+                        <select id="commandPlatform">
+                            <option value="windows">Windows</option>
+                            <option value="mac">macOS</option>
+                            <option value="linux">Linux</option>
+                        </select>
+                    </div>
                     <div class="source-field">
                         <label for="sourceMode">资源来源</label>
                         <select id="sourceMode">
@@ -731,22 +739,22 @@
                 </article>
                 <article class="command-card">
                     <h3 data-platform-heading="mac">macOS · 服务器命令</h3>
-                    <p data-local-pending hidden>本地兼容待补充，当前安装脚本暂未开放。</p>
+                    <p data-local-pending hidden>需要 Bash 和 jq；先切换 Local，再执行预览。</p>
                     <div class="command" data-process-platform="mac">
-                        <code>curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash</code>
-                        <button class="copy-btn" type="button" data-copy="curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash">复制命令</button>
+                        <code>curl -fsSL https://liyangxu1.github.io/keyrun/sh | bash</code>
+                        <button class="copy-btn" type="button" data-copy="curl -fsSL https://liyangxu1.github.io/keyrun/sh | bash">复制命令</button>
                     </div>
-                    <p data-server-pending>命令格式示例；当前仓库的 macOS 脚本尚待适配。</p>
+                    <p data-server-pending>需要 curl、jq；使用部署时生成的独立 sh 引导。</p>
                     <button class="link-btn" type="button" data-open-guide="mac">查看 macOS 指南</button>
                 </article>
                 <article class="command-card">
                     <h3 data-platform-heading="linux">Linux · 服务器命令</h3>
-                    <p data-local-pending hidden>本地兼容待补充，当前安装脚本暂未开放。</p>
+                    <p data-local-pending hidden>需要 Bash 和 jq；支持 XDG 配置和缓存目录。</p>
                     <div class="command" data-process-platform="linux">
-                        <code>curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash</code>
-                        <button class="copy-btn" type="button" data-copy="curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash">复制命令</button>
+                        <code>curl -fsSL https://liyangxu1.github.io/keyrun/sh | bash</code>
+                        <button class="copy-btn" type="button" data-copy="curl -fsSL https://liyangxu1.github.io/keyrun/sh | bash">复制命令</button>
                     </div>
-                    <p data-server-pending>命令格式示例；当前仓库的 Linux 脚本尚待适配。</p>
+                    <p data-server-pending>需要 curl、jq；无桌面环境也可执行预览。</p>
                     <button class="link-btn" type="button" data-open-guide="linux">查看 Linux 指南</button>
                 </article>
             </div>
@@ -891,49 +899,53 @@
                     </section>
                 </div>
                 <div id="guide-panel-mac" role="tabpanel" aria-labelledby="guide-tab-mac" data-guide-panel="mac" hidden>
-                    <div class="guide-status"><strong>macOS 本地兼容待开发。</strong>服务器命令可以用于访问服务端提供的独立脚本；当前仓库的 shell 入口仍停用，部署者需另行提供经过 Mac 验证的脚本，不能将示例命令当成兼容保证。</div>
+                    <div class="guide-status"><strong>macOS 原生 Bash 入口。</strong>兼容系统自带 Bash 3.2；使用 jq 解析配置，HTTP 模式需要 curl。安装只写用户配置目录，保留应用包签名。请先预览并核对目录。</div>
                     <section class="guide-section">
                         <h3>1. 准备本地项目与终端</h3>
                         <p>将完整项目放入本地目录，打开「终端」。将「你的项目地址」替换为项目文件夹的实际 POSIX 路径：</p>
                         <pre class="guide-command"><code>cd '你的项目地址'
 pwd</code></pre>
-                        <p>保留配置、Loader、scripts、ja-netfilter 和 licenses 目录。后续若采用 PowerShell 入口，需要安装 PowerShell 7，并确认终端能找到 <code>pwsh</code>；Windows 的 <code>powershell.exe</code> 不适用于 macOS。</p>
+                        <p>保留完整项目目录。先用 <code>command -v bash jq curl</code> 检查依赖；缺少 jq 时可通过已有的 Homebrew 安装：<code>brew install jq</code>。安装器不会自动安装依赖或执行个人 shell 配置。</p>
                     </section>
                     <section class="guide-section">
-                        <h3>2. Local 的后续适配形式</h3>
-                        <p>以下为本地开发参考，当前 Loader 的本地路径校验尚未适配 macOS。后续完成兼容时，需要显式切换 Local 才从本地项目读取：</p>
-                        <pre class="guide-command"><code># 待适配，当前版本请勿执行
-pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
-                        <p>Local 不需要 HTTP 服务。服务器服务的使用者无需在本机运行这条来源切换命令。</p>
+                        <h3>2. 切换 Local，预览后安装</h3>
+                        <pre class="guide-command"><code>bash ./switch-source.sh --mode local
+bash ./keyrun.sh --install --dry-run
+bash ./keyrun.sh --diagnose-idea-paths
+# 核对目录并关闭 IDE 后运行：
+bash ./keyrun.sh --install</code></pre>
+                        <p>Local 直接读取磁盘。预览不下载资源、不修改 IDE；只读诊断可用 <code>--properties-path '/路径/idea.properties'</code> 指定文件。实际安装先预检 25 个资源，在 <code>~/.jb_run/backups/</code> 保存原文件，重复执行不会累加相同启动参数。请以桌面用户运行，无需 sudo。</p>
                     </section>
                     <section class="guide-section">
                         <h3>3. HTTP 服务器命令示例</h3>
                         <p>选择 HTTP 并填写实际服务器根地址，在终端确认脚本来源后使用下面的形式。地址会与页面输入同步，无需先下载本地项目：</p>
-                        <pre class="guide-command"><code data-guide-remote="mac">curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash</code></pre>
-                        <p>服务器需要提供可独立运行且兼容 macOS 的 shell 脚本及资源。默认旧地址在 2026-10-14 核对时返回 404，只作示例；当前仓库的 shell 入口也尚未恢复。Mac 端实际处理能力仍留待后续开发。</p>
+                        <pre class="guide-command"><code data-guide-remote="mac">curl -fsSL https://liyangxu1.github.io/keyrun/sh | bash</code></pre>
+                        <p>维护者先运行 <code>bash ./switch-source.sh --mode http --http-base '实际地址'</code>，再发布完整项目。独立 sh 引导校验所需代码，准备临时目录并清理。默认旧地址仅作示例，需换成实际部署地址。首次远程预览可将管道末尾改为 <code>bash -s -- --dry-run</code>。</p>
                     </section>
                 </div>
                 <div id="guide-panel-linux" role="tabpanel" aria-labelledby="guide-tab-linux" data-guide-panel="linux" hidden>
-                    <div class="guide-status"><strong>Linux 本地兼容待开发。</strong>HTTP 命令调用服务端提供的独立脚本。当前仓库 shell 入口仍停用，服务器必须提供已验证的 Linux 脚本后，示例命令才具备实际处理能力。</div>
+                    <div class="guide-status"><strong>Linux 原生 Bash 入口。</strong>支持默认配置目录和 XDG_CONFIG_HOME、XDG_CACHE_HOME；识别缓存 .home 和部分标准安装、Toolbox 目录。无桌面环境可预览、诊断和安装，打开网页需另有 xdg-open。</div>
                     <section class="guide-section">
                         <h3>1. 准备本地项目与终端</h3>
                         <p>在终端进入完整项目目录。Linux 区分文件名大小写，请保留原有目录结构，并将「你的项目地址」替换为实际项目文件夹路径：</p>
                         <pre class="guide-command"><code>cd '你的项目地址'
 pwd</code></pre>
-                        <p>需要保留 scripts、ja-netfilter、licenses 和来源配置工具。若后续使用 PowerShell 入口，应确认环境中已有 PowerShell 7 与 <code>pwsh</code>；<code>powershell.exe</code> 是 Windows 命令。</p>
+                        <p>需要 Bash、jq；HTTP 模式还需要 curl。可按发行版自行安装依赖，例如 Debian/Ubuntu 使用 <code>sudo apt-get install bash jq curl</code>。安装器以普通用户运行，不自动调用包管理器。</p>
                     </section>
                     <section class="guide-section">
-                        <h3>2. Local 的后续适配形式</h3>
-                        <p>以下仅供本地开发参考，当前路径验证仍是 Windows 实现。完成兼容后，可从项目目录显式切换 Local：</p>
-                        <pre class="guide-command"><code># 待适配，当前版本请勿执行
-pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
-                        <p>Local 应直接读取磁盘，无需 HTTP 服务。HTTP 服务的使用者不需要执行本地来源切换或准备本地工程。</p>
+                        <h3>2. 切换 Local，预览后安装</h3>
+                        <pre class="guide-command"><code>bash ./switch-source.sh --mode local
+bash ./keyrun.sh --install --dry-run
+bash ./keyrun.sh --diagnose-idea-paths
+# 核对目录并关闭 IDE 后运行：
+bash ./keyrun.sh --install</code></pre>
+                        <p>未知目录可显式指定：<code>bash ./keyrun.sh --install --dry-run --config-dir '/配置目录' --product idea --ide-home '/安装目录'</code>。Snap、Flatpak 等隔离安装需按实际访问权限测试。安装前预检资源，备份到 <code>~/.jb_run/backups/</code>；写入失败时尝试恢复已修改文件。</p>
                     </section>
                     <section class="guide-section">
                         <h3>3. HTTP 服务器命令示例</h3>
                         <p>选择 HTTP 后填写实际服务器根地址，在终端确认脚本来源后使用服务端引导命令。这里的地址会随页面输入更新：</p>
-                        <pre class="guide-command"><code data-guide-remote="linux">curl -fsSL https://liyangxu1.github.io/keyrun/scripts/install.sh | bash</code></pre>
-                        <p>服务器必须提供兼容 Linux 的独立 shell 脚本和资源。默认旧地址在 2026-10-14 核对时返回 404；仓库 shell 入口尚未恢复，Linux 实际处理能力仍待开发。</p>
+                        <pre class="guide-command"><code data-guide-remote="linux">curl -fsSL https://liyangxu1.github.io/keyrun/sh | bash</code></pre>
+                        <p>维护者生成并发布 sh 与匹配代码后，最终使用者无需本地项目。示例地址需换成实际服务。远程预览可将管道末尾改为 <code>bash -s -- --dry-run</code>；没有交互终端时，实际安装需明确传入 <code>--yes</code>。</p>
                     </section>
                 </div>
                 <div class="guide-action">
@@ -945,6 +957,7 @@ pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
 
     <script>
         const sourceMode = document.getElementById("sourceMode");
+        const commandPlatform = document.getElementById("commandPlatform");
         const httpBase = document.getElementById("httpBase");
         const httpAddressField = document.getElementById("httpAddressField");
         const sourceCommand = document.getElementById("sourceCommand");
@@ -956,15 +969,20 @@ pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
         const modal = document.getElementById("guideModal");
         const openGuide = document.getElementById("openGuide");
         const closeGuide = document.getElementById("closeGuide");
-        let activeGuide = "windows";
+        const hostPlatform = navigator.platform || "";
+        let activeGuide = /Mac/i.test(hostPlatform) ? "mac" : /Linux/i.test(hostPlatform) ? "linux" : "windows";
+        commandPlatform.value = activeGuide;
         let previousOverflow = "";
         let projectDirectory = "";
+        let projectPosixDirectory = "";
 
         if (window.location.protocol === "file:") {
             try {
                 const pagePath = decodeURIComponent(window.location.pathname);
                 if (/^\/[A-Za-z]:\//.test(pagePath)) {
                     projectDirectory = pagePath.slice(1, pagePath.lastIndexOf("/") + 1).replace(/\//g, "\\");
+                } else if (pagePath.startsWith("/")) {
+                    projectPosixDirectory = pagePath.slice(0, pagePath.lastIndexOf("/") + 1);
                 }
             } catch (error) {
                 // A malformed file URL keeps the documented relative-path commands.
@@ -976,6 +994,13 @@ pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
         function windowsCommand(file, args = "", useProjectPath = true) {
             return "powershell.exe -NoProfile -File " +
                 quotePowerShell(useProjectPath && projectDirectory ? projectDirectory + file : ".\\" + file) +
+                (args ? " " + args : "");
+        }
+        function quoteShell(value) {
+            return "'" + value.replace(/'/g, "'\"'\"'") + "'";
+        }
+        function shellCommand(file, args = "", useProjectPath = true) {
+            return "bash " + quoteShell(useProjectPath && projectPosixDirectory ? projectPosixDirectory + file : "./" + file) +
                 (args ? " " + args : "");
         }
         function validateHttpBase(value) {
@@ -999,7 +1024,7 @@ pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
             return "'" + url.replace(/'/g, "'\"'\"'") + "'";
         }
         function serverCommand(platform, base) {
-            const relative = platform === "windows" ? "/ps1" : "/scripts/install.sh";
+            const relative = platform === "windows" ? "/ps1" : "/sh";
             const url = quoteServerUrl(base + relative, platform);
             return platform === "windows" ? "irm " + url + " | iex" : "curl -fsSL " + url + " | bash";
         }
@@ -1011,7 +1036,11 @@ pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
             const args = isHttp
                 ? "-Mode http -HttpBase " + quotePowerShell(validation.base || "请填写资源根地址")
                 : "-Mode local";
-            const command = windowsCommand("switch-source.ps1", args);
+            const shellArgs = isHttp
+                ? "--mode http --http-base " + quoteShell(validation.base || "请填写资源根地址")
+                : "--mode local";
+            const command = commandPlatform.value === "windows"
+                ? windowsCommand("switch-source.ps1", args) : shellCommand("switch-source.sh", shellArgs);
             sourceCommand.textContent = command;
             copySource.dataset.copy = valid ? command : "";
             copySource.disabled = !valid;
@@ -1025,25 +1054,25 @@ pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
             sourceHint.textContent = isHttp && !valid ? validation.error : isHttp
                 ? (isDefault
                     ? "默认示例地址在 2026-10-14 核对时返回 404。部署者需换成实际地址并执行配置命令；最终使用者直接运行下方服务器命令即可。"
-                    : "部署项目时执行配置命令，保存地址并更新 Windows 服务器引导。最终使用者直接运行下方服务器命令，无需本地项目或本地模式切换。")
+                    : "部署项目时执行配置命令并发布匹配版本。Windows 配置会生成两个平台入口；macOS/Linux 配置生成 sh，Windows ps1 需在 Windows 上同步生成。")
                 : "必须先执行 Local 切换命令再运行本地处理；未切换时，项目默认仍从服务器读取资源。网页选择不直接修改配置。";
 
             const labels = {windows:"Windows", mac:"macOS", linux:"Linux"};
             document.querySelectorAll("[data-platform-heading]").forEach(heading => {
                 const platform = heading.dataset.platformHeading;
-                heading.textContent = labels[platform] + (isHttp ? " · 服务器命令" : platform === "windows" ? " · 本地处理" : " · 本地待适配");
+                heading.textContent = labels[platform] + (isHttp ? " · 服务器命令" : platform === "windows" ? " · 本地处理" : " · 本地预览");
             });
             document.querySelectorAll("[data-local-pending]").forEach(note => { note.hidden = isHttp; });
             document.querySelectorAll("[data-server-pending]").forEach(note => { note.hidden = !isHttp; });
             document.querySelectorAll("[data-process-platform]").forEach(block => {
                 const platform = block.dataset.processPlatform;
-                block.hidden = !isHttp && platform !== "windows";
+                block.hidden = false;
                 const text = isHttp
                     ? (validation.base ? serverCommand(platform, validation.base) : "请输入有效服务器地址以生成命令")
-                    : windowsCommand("keyrun.ps1", "-Install");
+                    : platform === "windows" ? windowsCommand("keyrun.ps1", "-Install") : shellCommand("keyrun.sh", "--install --dry-run");
                 block.querySelector("code").textContent = text;
                 const button = block.querySelector(".copy-btn");
-                button.disabled = isHttp ? !validation.base : platform !== "windows";
+                button.disabled = isHttp ? !validation.base : false;
                 button.dataset.copy = button.disabled ? "" : text;
                 button.textContent = "复制命令";
             });
@@ -1063,12 +1092,18 @@ pwsh -NoProfile -File ./switch-source.ps1 -Mode local</code></pre>
         }
 
         sourceMode.addEventListener("change", updateSourceCommand);
+        commandPlatform.addEventListener("change", () => {
+            activeGuide = commandPlatform.value;
+            updateSourceCommand();
+        });
         httpBase.addEventListener("input", updateSourceCommand);
         updateSourceCommand();
 
         function selectGuide(name, focus = false) {
             if (!guideTabs.some(tab => tab.dataset.guideTab === name)) return;
             activeGuide = name;
+            commandPlatform.value = name;
+            updateSourceCommand();
             guideTabs.forEach(tab => {
                 const selected = tab.dataset.guideTab === name;
                 tab.setAttribute("aria-selected", String(selected));

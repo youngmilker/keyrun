@@ -1,13 +1,95 @@
 <p align="right"><a href="./README.md">简体中文</a> | English</p>
 
-# KeyRun Windows tools
+# KeyRun cross-platform tools
 
 The supported entry is the local `keyrun.ps1` file. It reads ordinary resources through
 `source-config.json → resource-loader.ps1 → keyrun.ps1` and supports Windows PowerShell 5.1.
 The shipped configuration defaults to HTTP. Run -Mode local explicitly to select disk files;
 the selection persists in source-config.json until another switch. Local mode needs no HTTP service. Resource reads and path diagnosis
 need no administrator rights. Use -Install to run the restored Windows processing flow.
-macOS/Linux compatibility is deferred; the shell installer remains disabled.
+macOS/Linux use native Bash entries and share the same source configuration and resources.
+
+## macOS / Linux
+
+Requirements: Bash 3.2+, jq, and curl for HTTP. Text reads use the system iconv.
+PowerShell is not required. The installer does not install dependencies or source shell profiles.
+Use your normal desktop account, without sudo.
+
+```bash
+bash ./switch-source.sh --mode local
+bash ./keyrun.sh --install --dry-run
+bash ./keyrun.sh --diagnose-idea-paths
+# Optional: inspect a particular properties file or installation directory.
+bash ./keyrun.sh --diagnose-idea-paths --properties-path '/path/to/idea.properties'
+# After reviewing paths and closing all JetBrains IDEs:
+bash ./keyrun.sh --install
+```
+
+Dry runs show targets and templates without downloading resources or changing IDE files.
+Discovery checks default configuration directories, cached `.home` files and bounded standard/Toolbox locations.
+macOS supports `.app/Contents/bin`; Linux honors XDG_CONFIG_HOME, XDG_CACHE_HOME and Toolbox's XDG_DATA_HOME.
+Installation metadata (`product-info.json`, `dataDirectoryName`) can identify configurations without caches.
+For other layouts, use:
+
+```bash
+bash ./keyrun.sh --install --dry-run \
+  --config-dir '/configuration directory' --product idea --ide-home '/installation or .app'
+```
+
+The installer stages all 25 resources before persistent changes. Agent files go into `~/.jb_run/`.
+VM options and keys go into user configuration directories; macOS application bundles are not modified.
+New VM options copy the installed template. Existing JVM settings and unrelated agents are preserved;
+repeated installation replaces existing KeyRun/ja-netfilter options rather than appending duplicates.
+Simple `idea.config.path`, `${user.home}`, relative paths and product `*_PROPERTIES` overrides are supported.
+Complex Java properties syntax and Snap/Flatpak permissions require explicit configuration and testing.
+
+Each write session keeps originals under `~/.jb_run/backups/run-*/files/<original absolute path>`.
+`manifest.jsonl` records whether each file previously existed. Failed writes attempt to restore modified files;
+forced termination or power loss requires manual restoration from the retained backup.
+Simple VM_OPTIONS assignments for discovered products are backed up and removed from common profiles.
+Complex definitions stop installation for manual review; profiles are never executed.
+macOS also clears existing launchctl values. Custom LaunchAgents/systemd user environments need separate review;
+a child process cannot clear its parent shell environment. Use a new terminal or login session when needed.
+Installation targets reject symlink paths. `--yes` confirms installation in noninteractive sessions.
+
+Resources can be read with `--resource-path PATH --format text|json|bytes`.
+Bytes are preserved exactly, text must be valid UTF-8, and UTF-8 BOMs are removed.
+Local mode makes no HTTP requests; resource traversal and links inside the configured root are rejected.
+
+## macOS / Linux standalone HTTP entry
+
+The maintainer runs this in a complete checkout and publishes the matching project:
+
+```bash
+bash ./switch-source.sh --mode http --http-base 'https://your-server/keyrun' --timeout-seconds 20
+```
+
+This generates `/sh` with the server address and SHA-256 hashes for six code files.
+Regenerate after shell code changes and preserve LF line endings (.gitattributes).
+Windows configuration also generates `/sh`. When deploying from macOS/Linux, regenerate Windows `/ps1`
+on Windows if you also publish a Windows entry at the new address.
+
+End users do not need a local project:
+
+```bash
+curl -fsSL 'https://your-server/keyrun/sh' | bash -s -- --dry-run
+# After reviewing paths and closing IDEs:
+curl -fsSL 'https://your-server/keyrun/sh' | bash
+```
+
+The bootstrap checks all code before execution and cleans temporary files afterwards.
+HTTP rejects redirects and non-2xx responses, honors timeouts, and never falls back to another source.
+Code hashes detect mismatched deployment versions; use a trusted bootstrap server.
+`scripts/install.sh` is a local compatibility entry; use `/sh` for remote pipelines.
+
+Run harmless integration tests with `python3 tests/test-unix.py` (requires loopback HTTP access).
+Tests create only temporary resources and simulated IDEs, never execute real JARs or alter real IDEs.
+For real Linux validation:
+
+```bash
+docker build -f tests/Dockerfile.unix -t keyrun-unix-test .
+docker run --rm --network none keyrun-unix-test
+```
 
 ```powershell
 .\switch-source.ps1 -Mode local
@@ -57,8 +139,8 @@ be loaded by the IDE. No remote PowerShell script is downloaded or executed.
 The original name/date prompts do not regenerate the static key resources.
 File-write success does not verify the software's licensing outcome; reopen the IDE to check.
 
-scripts/install.ps1 is restored and uses the Loader. The old duplicate test_script.ps1 and
-the shell installer remain disabled. tests/test-install-resource-wiring.ps1 verifies the
+scripts/install.ps1 is restored and uses the Loader. The old duplicate test_script.ps1 remains
+disabled. tests/test-install-resource-wiring.ps1 verifies the Windows
 wiring in temporary directories without invoking Main, UAC, or installed IDE changes.
 Original backups must not be executed.
 
@@ -83,8 +165,7 @@ Embedded hashes detect mismatched deployments; the initial bootstrap is still su
 chosen server and must be trusted. Local mode remains selected after -Mode local, until -Mode http
 is executed again. End users of the deployed entry need no local switch command.
 
-The macOS/Linux curl examples require the server to provide independently compatible shell code;
-this repository's shell entry remains disabled until the deferred compatibility work is completed.
+The macOS/Linux curl examples use the generated standalone `/sh` entry.
 tests/test-server-bootstrap.ps1 uses only a loopback server and harmless fixture code, with no
 real installation or IDE changes.
 

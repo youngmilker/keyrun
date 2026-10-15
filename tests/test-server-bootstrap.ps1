@@ -14,8 +14,12 @@ function Assert-True([bool]$Condition, [string]$Name) {
 
 try {
     New-Item -ItemType Directory -Path (Join-Path $packageRoot 'scripts') -Force | Out-Null
-    foreach ($relative in @('resource-loader.ps1','switch-source.ps1','scripts/build-server-bootstrap.ps1','scripts/server-bootstrap.template.ps1')) {
+    foreach ($relative in @('resource-loader.ps1','switch-source.ps1','scripts/build-server-bootstrap.ps1','scripts/server-bootstrap.template.ps1','scripts/build-unix-bootstrap.ps1','scripts/server-bootstrap.template.sh')) {
         Copy-Item -LiteralPath (Join-Path $repoRoot $relative) -Destination (Join-Path $packageRoot $relative)
+    }
+    # Harmless LF-only shell code fixtures exercise the Windows-generated Unix entry.
+    foreach ($relative in @('resource-loader.sh','keyrun.sh','scripts/platform-paths.sh','scripts/install.sh','scripts/install-unix.sh','scripts/diagnose-idea-paths.sh')) {
+        [IO.File]::WriteAllText((Join-Path $packageRoot $relative), "#!/bin/bash`n# harmless fixture`n", (New-Object Text.UTF8Encoding($false)))
     }
     $stub = @'
 param([switch]$Install)
@@ -48,6 +52,13 @@ Write-Host 'Harmless HTTP bootstrap fixture completed.'
     Assert-True ($config.mode -eq 'http' -and $config.httpBase -eq $base) 'server switch persists address'
     Assert-True ($bootstrapText.Contains("`$KeyRunBootstrapHttpBase = '$base'")) 'server switch regenerates standalone bootstrap address'
     Assert-True (-not $bootstrapText.Contains('__KEYRUN_')) 'all bootstrap placeholders replaced'
+    $unixBootstrap = [IO.File]::ReadAllText((Join-Path $packageRoot 'sh'))
+    Assert-True ($unixBootstrap.Contains("KR_BOOT_BASE='$base'")) 'Windows deployment synchronizes Unix server address'
+    Assert-True (-not $unixBootstrap.Contains('__KEYRUN_') -and -not $unixBootstrap.Contains("`r")) 'Unix entry has resolved placeholders and LF endings'
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { $fixtureHash = [BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes((Join-Path $packageRoot 'keyrun.sh')))).Replace('-', '').ToLowerInvariant() }
+    finally { $sha.Dispose() }
+    Assert-True ($unixBootstrap.Contains("keyrun.sh|$fixtureHash")) 'Unix code hash preserves raw fixture bytes'
     $marker = Join-Path $testRoot 'marker.txt'
     $env:KEYRUN_BOOTSTRAP_TEST_MARKER = $marker
     $emptyDirectory = Join-Path $testRoot 'empty-client'

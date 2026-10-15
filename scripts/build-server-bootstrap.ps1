@@ -30,3 +30,8 @@ $tokens = $null; $parseErrors = $null
 if ($parseErrors.Count) { throw ($parseErrors | Out-String) }
 [IO.File]::WriteAllText((Join-Path $projectRoot 'ps1'), $content, (New-Object Text.UTF8Encoding($false)))
 Write-Host ("Server bootstrap generated for: {0}" -f $base)
+# Keep the macOS/Linux standalone entry in sync when deploying from Windows.
+$unixBuilder = Join-Path $PSScriptRoot 'build-unix-bootstrap.ps1'
+if ([IO.File]::Exists($unixBuilder)) {
+    & $unixBuilder -HttpBase $base -TimeoutSeconds $TimeoutSeconds
+}

@@ -1,5 +1,23 @@
 # KeyRun 当前来源模式与服务器引导报告
 
+## 2026-10-15：macOS / Linux 原生实现
+
+- 新增 `keyrun.sh → resource-loader.sh`、`switch-source.sh`，共用 `source-config.json`。
+- 本地兼容入口 `scripts/install.sh` 转发至 `install-unix.sh`；旧 Shell 实现由 Git 历史保留。
+- 安装使用用户配置目录，支持预览、简单自定义路径、XDG、Mac 应用包目录、缓存与安装元数据发现。
+- 25 个资源完整暂存后才写入；保留 JVM 配置、其他 Agent，重复运行不重复追加。
+- 原文件和 manifest 保存在 `~/.jb_run/backups/`；失败尝试恢复，安装锁防止并发覆盖。
+- 独立服务器入口改为 `/sh`，部署时内嵌六个代码文件的 SHA-256；校验后执行并清理临时目录。
+- Windows 构建器可调用新增的 `build-unix-bootstrap.ps1` 同步生成 `/sh`。
+- 网页按平台生成来源切换与安装命令，提供预览和实际安装说明。
+- 验证脚本 `tests/test-unix.py` 使用无害临时资源；`tests/Dockerfile.unix` 提供 Linux 复测环境。
+- macOS ARM64 系统 Bash 3.2 与 Debian ARM64 容器 Bash 5.2 各通过 28 项模拟集成测试。
+- 本机只读预览识别 5 个配置目录：GoLand2025.2、GoLand2026.2、PyCharm2025.2、PyCharm2026.1、PyCharm2026.2；没有下载或修改 IDE。
+- Shell 语法、页面命令生成、HTML ID/ARIA、独立引导实际代码哈希及 `git diff --check` 已通过。
+- 当前工作未运行真实 IDE 或 JAR，也未部署公开服务。真实 IDE 重启结果与 Windows 回归需另行验证。
+
+以下为 2026-10-14 的 Windows 阶段记录，其中“Shell 停用”的状态已由上述实现取代。
+
 更新日期：2026-10-14。当前初始配置已改为 **HTTP**：
 httpBase 为 `https://liyangxu1.github.io/keyrun`，localRoot 为 `.`，超时 20 秒。
 原地址是用户指定的示例；本轮 HEAD 核对根地址、/ps1 和 /scripts/install.sh 均为 404。
